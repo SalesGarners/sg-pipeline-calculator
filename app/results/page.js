@@ -198,11 +198,12 @@ export default function ResultsPage() {
       doc.setTextColor(255, 255, 255)
       doc.text('Visit: salesgarners.com', 19, y + 6.5)
 
+      const footerY = Math.max(y + 10, 275)
       doc.setFontSize(8)
       doc.setFont('helvetica', 'normal')
       doc.setTextColor(...gray)
-      doc.text('SalesGarners Marketing Pvt. Ltd.  |  salesgarners.com', 15, 285)
-      doc.text(`© ${currentYear} SalesGarners. Confidential — prepared exclusively for ${formData.name}`, 15, 290)
+      doc.text('SalesGarners Marketing Pvt. Ltd.  |  salesgarners.com', 15, footerY)
+      doc.text(`© ${currentYear} SalesGarners. Confidential — prepared exclusively for ${formData.name}`, 15, footerY + 6)
 
       doc.save(`SalesGarners_Pipeline_Report_${formData.name.replace(/\s+/g, '_')}.pdf`)
     } catch (err) {
