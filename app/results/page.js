@@ -7,15 +7,13 @@ import Link from 'next/link'
 function formatCurrency(value) {
   if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`
   if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`
-  return `$${value}`
+  return `$${Math.round(value)}`
 }
 
-function ScoreArc({ score }) {
-  const radius = 54
-  const circumference = Math.PI * radius
+function ScoreArc({ score, label }) {
+  const circumference = Math.PI * 54
   const offset = circumference - (score / 100) * circumference
   const color = score >= 80 ? '#10b981' : score >= 65 ? '#7C3AED' : score >= 40 ? '#f59e0b' : '#ef4444'
-  const label = score >= 80 ? 'Excellent' : score >= 65 ? 'Strong' : score >= 40 ? 'Good' : 'Needs Work'
 
   return (
     <div className="flex flex-col items-center">
@@ -39,6 +37,29 @@ function ScoreArc({ score }) {
         </div>
       </div>
       <span className="mt-2 text-sm font-bold" style={{ color }}>{label}</span>
+    </div>
+  )
+}
+
+function GapCard({ title, current, potential, gap, currentLabel, potentialLabel, gapLabel, isCurrency }) {
+  const fmt = isCurrency ? formatCurrency : (v) => v
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+      <h3 className="font-bold text-gray-900 text-base mb-4">{title}</h3>
+      <div className="space-y-3">
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-500">{currentLabel}</span>
+          <span className="font-semibold text-gray-900">{fmt(current)}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-500">{potentialLabel}</span>
+          <span className="font-semibold text-violet-700">{fmt(potential)}</span>
+        </div>
+        <div className="border-t border-gray-100 pt-3 flex justify-between text-sm">
+          <span className="font-semibold text-gray-700">{gapLabel}</span>
+          <span className="font-bold text-green-600">+{fmt(gap)}</span>
+        </div>
+      </div>
     </div>
   )
 }
@@ -68,43 +89,51 @@ export default function ResultsPage() {
       const { jsPDF } = await import('jspdf')
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
       const { formData, results } = data
-      const { meetings, pipeline, revenue, gtmScore, plan, pipelineGap } = results
+      const {
+        expectedMeetings, currentMeetings, meetingGap,
+        currentPipeline, requiredPipeline, pipelineGap,
+        monthlyRevenueTarget, revenueMonthly, revenueGap,
+        pipelineQuarter, gtmScore, gtmLabel, plan,
+      } = results
 
       const purple = [124, 58, 237]
       const dark = [17, 24, 39]
       const gray = [107, 114, 128]
       const lightGray = [243, 244, 246]
 
+      // Header
       doc.setFillColor(...purple)
-      doc.rect(0, 0, 210, 32, 'F')
-      doc.setFontSize(18)
+      doc.rect(0, 0, 210, 35, 'F')
+      doc.setFontSize(16)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(255, 255, 255)
-      doc.text('Your 90-Day Pipeline & Sales Meeting Forecast', 15, 14)
-      doc.setFontSize(10)
+      doc.text('Your Pipeline & Revenue Assessment Results', 15, 14)
+      doc.setFontSize(9)
       doc.setFont('helvetica', 'normal')
-      doc.text(`Prepared for: ${formData.name}  |  ${formData.email}`, 15, 23)
-      doc.text(`Generated: ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`, 15, 29)
+      doc.text('Based on your inputs and industry benchmarks, here is your modeled pipeline opportunity.', 15, 22)
+      doc.text(`Prepared for: ${formData.name} | ${formData.companyName} | ${formData.email}`, 15, 29)
 
-      let y = 42
-      doc.setFontSize(13)
+      let y = 44
+
+      // KPI Cards
+      doc.setFontSize(12)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(...dark)
-      doc.text('Your Pipeline Forecast', 15, y)
+      doc.text('Key Metrics', 15, y)
       y += 6
       doc.setDrawColor(...purple)
       doc.setLineWidth(0.5)
       doc.line(15, y, 195, y)
-      y += 8
+      y += 6
 
-      const metrics = [
-        { label: 'Est. Meetings/Month', value: `${meetings.low}–${meetings.high}` },
-        { label: 'Pipeline per Quarter', value: formatCurrency(pipeline) },
-        { label: 'Revenue Potential', value: formatCurrency(revenue) },
-        { label: 'GTM Score', value: `${gtmScore}/100` },
+      const kpis = [
+        { label: 'GTM Readiness Score', value: `${gtmScore}/100 — ${gtmLabel}` },
+        { label: 'Expected Meetings/Month', value: String(expectedMeetings) },
+        { label: 'Pipeline Potential/Quarter', value: formatCurrency(pipelineQuarter) },
+        { label: 'Revenue Potential/Month', value: formatCurrency(revenueMonthly) },
       ]
 
-      metrics.forEach((m, i) => {
+      kpis.forEach((k, i) => {
         const col = i % 2
         const row = Math.floor(i / 2)
         const x = 15 + col * 95
@@ -114,91 +143,79 @@ export default function ResultsPage() {
         doc.setFontSize(8)
         doc.setFont('helvetica', 'normal')
         doc.setTextColor(...gray)
-        doc.text(m.label.toUpperCase(), x + 4, boxY + 7)
-        doc.setFontSize(14)
+        doc.text(k.label.toUpperCase(), x + 4, boxY + 7)
+        doc.setFontSize(11)
         doc.setFont('helvetica', 'bold')
         doc.setTextColor(...purple)
-        doc.text(m.value, x + 4, boxY + 16)
+        doc.text(k.value, x + 4, boxY + 16)
       })
 
-      y += 60
-      doc.setFontSize(13)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(...dark)
-      doc.text('Pipeline Gap Analysis', 15, y)
-      y += 6
-      doc.setDrawColor(...purple)
-      doc.line(15, y, 195, y)
-      y += 8
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(...gray)
+      y += 58
 
-      const gapLines = [
-        `Meeting Gap: You are targeting ${formData.monthlyMeetingTarget} meetings/month but currently getting ${formData.currentMeetings}.`,
-        `Forecast shows you can reach ${meetings.low}–${meetings.high} meetings/month with the right outbound motion.`,
-        `Pipeline Gap: To hit your ${formatCurrency(formData.revenueTarget * 2)} annual target, you need ${formatCurrency(pipelineGap)} more quarterly pipeline.`,
-      ]
-      gapLines.forEach((line) => {
-        const wrapped = doc.splitTextToSize(line, 175)
-        doc.text(wrapped, 15, y)
-        y += wrapped.length * 6 + 3
-      })
-
-      y += 4
-      doc.setFontSize(13)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(...dark)
-      doc.text('Benchmark vs Market', 15, y)
-      y += 6
-      doc.setDrawColor(...purple)
-      doc.line(15, y, 195, y)
-      y += 8
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(...gray)
-      const benchLines = [
-        'Top-performing B2B SaaS teams generate 15–30 qualified meetings per SDR per month.',
-        'Average reply rates for intent-based outbound campaigns: 8–15%.',
-        `Your GTM score of ${gtmScore}/100 places you in the ${plan.name} tier.`,
-      ]
-      benchLines.forEach((line) => {
-        const wrapped = doc.splitTextToSize(line, 175)
-        doc.text(wrapped, 15, y)
-        y += wrapped.length * 6 + 3
-      })
-
-      y += 4
-      doc.setFillColor(...purple)
-      doc.roundedRect(15, y, 180, 40, 3, 3, 'F')
-      doc.setFontSize(11)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(255, 255, 255)
-      doc.text(`Recommended Plan: ${plan.name}`, 22, y + 11)
-      doc.setFontSize(9)
-      doc.setFont('helvetica', 'normal')
-      const planText = doc.splitTextToSize(plan.description, 166)
-      doc.text(planText, 22, y + 20)
-
-      y += 50
+      // Gap Analysis
       doc.setFontSize(12)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(...dark)
-      doc.text('Ready to Execute This Plan?', 15, y)
-      y += 8
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(...gray)
-      doc.text('Contact the SalesGarners team to build your customised outbound pipeline plan.', 15, y)
-      y += 10
+      doc.text('Gap Analysis', 15, y)
+      y += 6
+      doc.setDrawColor(...purple)
+      doc.line(15, y, 195, y)
+      y += 6
+
+      const gaps = [
+        { label: 'Meeting Gap', current: `Current: ${currentMeetings}`, potential: `Potential: ${expectedMeetings}`, gap: `Gap: +${meetingGap} meetings/month` },
+        { label: 'Pipeline Gap', current: `Current: ${formatCurrency(currentPipeline)}`, potential: `Required: ${formatCurrency(requiredPipeline)}`, gap: `Gap: ${formatCurrency(pipelineGap)}` },
+        { label: 'Revenue Gap', current: `Target: ${formatCurrency(monthlyRevenueTarget)}/month`, potential: `Modeled: ${formatCurrency(revenueMonthly)}/month`, gap: `Gap: ${formatCurrency(revenueGap)}/month` },
+      ]
+
+      gaps.forEach((g) => {
+        doc.setFillColor(...lightGray)
+        doc.roundedRect(15, y, 180, 22, 2, 2, 'F')
+        doc.setFontSize(9)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(...dark)
+        doc.text(g.label, 19, y + 7)
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(...gray)
+        doc.text(`${g.current}   |   ${g.potential}   |   ${g.gap}`, 19, y + 15)
+        y += 28
+      })
+
+      y += 4
+
+      // Recommended Plan
       doc.setFillColor(...purple)
-      doc.roundedRect(15, y, 80, 10, 2, 2, 'F')
+      doc.roundedRect(15, y, 180, 45, 3, 3, 'F')
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(255, 255, 255)
+      doc.text('Recommended Plan', 22, y + 10)
+      doc.setFontSize(13)
+      doc.text(`${plan.name} — ${plan.price}`, 22, y + 20)
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'normal')
+      plan.outcomes.forEach((outcome, i) => {
+        doc.text(`• ${outcome}`, 22, y + 30 + i * 6)
+      })
+
+      y += 55
+
+      // CTA
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(...dark)
+      doc.text('Review your assessment and pipeline opportunities with our team.', 15, y)
+      y += 8
+      doc.setFillColor(...purple)
+      doc.roundedRect(15, y, 70, 10, 2, 2, 'F')
       doc.setFontSize(9)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(255, 255, 255)
-      doc.text('Visit: salesgarners.com', 19, y + 6.5)
+      doc.text('Visit: salesgarners.com/contact-us', 19, y + 6.5)
 
-      const footerY = Math.max(y + 10, 275)
+      // Footer
+      const footerY = Math.max(y + 20, 275)
       doc.setFontSize(8)
       doc.setFont('helvetica', 'normal')
       doc.setTextColor(...gray)
@@ -229,7 +246,12 @@ export default function ResultsPage() {
   }
 
   const { formData, results } = data
-  const { meetings, pipeline, revenue, gtmScore, plan } = results
+  const {
+    expectedMeetings, currentMeetings, meetingGap,
+    currentPipeline, requiredPipeline, pipelineGap,
+    monthlyRevenueTarget, revenueMonthly, revenueGap,
+    pipelineQuarter, gtmScore, gtmLabel, plan,
+  } = results
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -242,11 +264,13 @@ export default function ResultsPage() {
           <Link href="/">
             <img src="/SalesGarners_20250821_204042_0001.webp" alt="SalesGarners" className="h-8 w-auto" />
           </Link>
-          <span className="text-sm text-gray-500 font-medium">Your Pipeline Assessment Results</span>
+          <span className="text-sm text-gray-500 font-medium">Your Pipeline & Revenue Assessment Results</span>
         </div>
       </nav>
 
       <div className="max-w-5xl mx-auto px-6 py-12">
+
+        {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-4">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -255,126 +279,119 @@ export default function ResultsPage() {
             Assessment Complete
           </div>
           <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-3">
-            Your 90-Day Pipeline Forecast,{' '}
-            <span className="bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
-              {formData.name.split(' ')[0]}
-            </span>
+            Your Pipeline & Revenue Assessment Results
           </h1>
           <p className="text-gray-500 max-w-xl mx-auto">
-            Based on your inputs, here is what your pipeline and sales meeting potential looks like over the next 90 days.
+            Based on your inputs and industry benchmarks, here is your modeled pipeline opportunity.
           </p>
         </div>
 
+        {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 col-span-2 lg:col-span-1 flex flex-col items-center justify-center">
+            <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide mb-3">GTM Readiness Score</p>
+            <ScoreArc score={gtmScore} label={gtmLabel} />
+          </div>
           <div className="bg-violet-600 rounded-2xl p-6 text-white">
-            <p className="text-violet-200 text-sm font-semibold uppercase tracking-wide mb-2">Est. Meetings/Month</p>
-            <p className="text-3xl font-extrabold">{meetings.low}–{meetings.high}</p>
-            <p className="text-violet-200 text-sm mt-1">Qualified demos & discovery calls</p>
+            <p className="text-violet-200 text-sm font-semibold uppercase tracking-wide mb-2">Expected Meetings/Month</p>
+            <p className="text-4xl font-extrabold">{expectedMeetings}</p>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide mb-2">Pipeline per Quarter</p>
-            <p className="text-3xl font-extrabold text-gray-900">{formatCurrency(pipeline)}</p>
-            <p className="text-gray-500 text-sm mt-1">Total addressable pipeline</p>
+            <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide mb-2">Pipeline Potential/Quarter</p>
+            <p className="text-3xl font-extrabold text-gray-900">{formatCurrency(pipelineQuarter)}</p>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide mb-2">Revenue Potential</p>
-            <p className="text-3xl font-extrabold text-gray-900">{formatCurrency(revenue)}</p>
-            <p className="text-gray-500 text-sm mt-1">Based on 25% close rate</p>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col items-center justify-center">
-            <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide mb-3">GTM Score</p>
-            <ScoreArc score={gtmScore} />
+            <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide mb-2">Revenue Potential/Month</p>
+            <p className="text-3xl font-extrabold text-gray-900">{formatCurrency(revenueMonthly)}</p>
           </div>
         </div>
 
+        {/* Gap Analysis */}
+        <div className="mb-8">
+          <h2 className="text-xl font-extrabold text-gray-900 mb-4">Gap Analysis</h2>
+          <div className="grid lg:grid-cols-3 gap-4">
+            <GapCard
+              title="Meeting Gap"
+              current={currentMeetings}
+              potential={expectedMeetings}
+              gap={meetingGap}
+              currentLabel="Current Meetings"
+              potentialLabel="Potential Meetings"
+              gapLabel="Gap Identified"
+              isCurrency={false}
+            />
+            <GapCard
+              title="Pipeline Gap"
+              current={currentPipeline}
+              potential={requiredPipeline}
+              gap={pipelineGap}
+              currentLabel="Current Pipeline"
+              potentialLabel="Required Pipeline"
+              gapLabel="Gap Identified"
+              isCurrency={true}
+            />
+            <GapCard
+              title="Revenue Gap"
+              current={monthlyRevenueTarget}
+              potential={revenueMonthly}
+              gap={revenueGap}
+              currentLabel="Target Revenue/Month"
+              potentialLabel="Modeled Revenue/Month"
+              gapLabel="Gap Identified"
+              isCurrency={true}
+            />
+          </div>
+        </div>
+
+        {/* Recommended Plan */}
         <div className="bg-violet-600 rounded-2xl p-8 text-white mb-8">
-          <div className="flex items-start justify-between flex-wrap gap-4">
-            <div className="flex-1">
-              <p className="text-violet-200 text-sm font-semibold uppercase tracking-wide mb-1">Recommended Plan</p>
-              <h2 className="text-2xl font-extrabold mb-3">{plan.name}</h2>
-              <p className="text-violet-100 leading-relaxed max-w-2xl">
-                Based on your numbers — {plan.description}
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 min-w-[200px]">
-              <button
-                onClick={handleDownloadPDF}
-                disabled={pdfLoading}
-                className="border-2 border-white text-white font-bold px-6 py-3 rounded-xl text-center hover:bg-violet-700 transition-colors disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
-              >
-                {pdfLoading ? (
-                  <>
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    Generating...
-                  </>
-                ) : 'Download Full Report'}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h3 className="font-bold text-gray-900 text-lg mb-4">Pipeline Gap Analysis</h3>
-            <div className="space-y-4">
-              {[
-                { label: 'Current meetings/month', value: formData.currentMeetings, max: formData.monthlyMeetingTarget, color: 'bg-gray-400' },
-                { label: 'Forecast meetings/month', value: results.meetings.estimated, max: formData.monthlyMeetingTarget, color: 'bg-gradient-to-r from-violet-600 to-pink-500' },
-                { label: 'Target meetings/month', value: formData.monthlyMeetingTarget, max: formData.monthlyMeetingTarget, color: 'bg-gray-300' },
-              ].map((item) => (
-                <div key={item.label}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-500">{item.label}</span>
-                    <span className="font-bold text-gray-900">{item.value}</span>
-                  </div>
-                  <div className="bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`${item.color} rounded-full h-2`}
-                      style={{ width: `${Math.min(100, (item.value / item.max) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h3 className="font-bold text-gray-900 text-lg mb-4">Your Inputs Summary</h3>
-            <div className="space-y-2 text-sm">
-              {[
-                { label: 'Deal Size (ACV)', value: `$${Number(formData.acv).toLocaleString()}` },
-                { label: 'Target Market', value: formData.targetMarket.toUpperCase() },
-                { label: 'Database Size', value: `${Number(formData.databaseSize).toLocaleString()} contacts` },
-                { label: 'Running Outbound', value: formData.runningOutbound ? 'Yes' : 'No' },
-                { label: 'Revenue Target (2Q)', value: formatCurrency(formData.revenueTarget) },
-              ].map((item) => (
-                <div key={item.label} className="flex justify-between py-2 border-b border-gray-50 last:border-0">
-                  <span className="text-gray-500">{item.label}</span>
-                  <span className="font-semibold text-gray-900">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="text-center bg-white rounded-2xl border border-gray-100 p-8">
-          <h3 className="text-xl font-extrabold text-gray-900 mb-2">Ready to build this pipeline?</h3>
-          <p className="text-gray-500 mb-6 max-w-lg mx-auto">
-            Our team will walk you through a custom outbound plan based on your exact numbers — no generic advice, just execution.
+          <p className="text-violet-200 text-sm font-semibold uppercase tracking-wide mb-1">Recommended Plan</p>
+          <h2 className="text-2xl font-extrabold mb-1">{plan.name} — {plan.price}</h2>
+          <p className="text-violet-200 text-sm mb-4">
+            Based on your pipeline potential and revenue targets, we recommend the {plan.name}.
           </p>
-          <div className="flex justify-center">
+          <p className="text-white font-semibold mb-3">Expected Outcome:</p>
+          <ul className="space-y-2">
+            {plan.outcomes.map((outcome, i) => (
+              <li key={i} className="flex items-center gap-2 text-violet-100 text-sm">
+                <svg className="w-4 h-4 text-violet-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                {outcome}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* CTAs */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+          <h3 className="text-xl font-extrabold text-gray-900 mb-2">Book Your Pipeline Strategy Call</h3>
+          <p className="text-gray-500 mb-6 max-w-lg mx-auto">
+            Review your assessment and pipeline opportunities with our team.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <a
+              href="https://salesgarners.com/contact-us/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-8 py-3 rounded-md transition-colors cursor-pointer"
+            >
+              Book Your Pipeline Strategy Call
+            </a>
             <button
               onClick={handleDownloadPDF}
               disabled={pdfLoading}
-              className="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-8 py-3 rounded-md transition-colors disabled:opacity-60 cursor-pointer"
+              className="border-2 border-violet-600 text-violet-600 hover:bg-violet-600 hover:text-white font-semibold px-8 py-3 rounded-md transition-colors disabled:opacity-60 cursor-pointer"
             >
-              {pdfLoading ? 'Generating PDF...' : 'Download Full Report PDF'}
+              {pdfLoading ? 'Generating PDF...' : 'Download Your Full Pipeline Report'}
             </button>
           </div>
         </div>
+
+        {/* Trust section */}
+        <p className="text-center text-gray-400 text-sm mt-8 max-w-2xl mx-auto">
+          SalesGarners helps B2B tech companies build predictable pipeline through data-driven outbound and revenue modeling.
+        </p>
       </div>
 
       <footer className="py-8 px-6 text-center text-gray-400 text-sm">

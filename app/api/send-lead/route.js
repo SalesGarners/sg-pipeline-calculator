@@ -7,31 +7,38 @@ export async function POST(request) {
     const body = await request.json()
 
     const {
-      name,
-      email,
-      acv,
-      targetMarket,
-      monthlyMeetingTarget,
-      currentMeetings,
-      databaseSize,
-      runningOutbound,
-      revenueTarget,
+      name, companyName, email, companyWebsite, jobTitle,
+      targetMarket, industry, acv, salesCycle,
+      quarterlyRevenueTarget, mqlsPerMonth, mqlToSql, sqlToCustomer,
+      currentMeetings, currentPipeline, marketingSpend,
+      outboundType, databaseSize, databaseAccuracy, crm,
     } = body
 
-    if (!name || !email || !acv || !targetMarket || !monthlyMeetingTarget || !databaseSize || revenueTarget === undefined) {
+    if (!name || !email || !companyName || !targetMarket || !acv || !quarterlyRevenueTarget) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     const formData = {
       name: String(name).trim(),
+      companyName: String(companyName).trim(),
       email: String(email).trim(),
-      acv: Number(acv),
+      companyWebsite: String(companyWebsite || '').trim(),
+      jobTitle: String(jobTitle || '').trim(),
       targetMarket: String(targetMarket),
-      monthlyMeetingTarget: Number(monthlyMeetingTarget),
-      currentMeetings: Number(currentMeetings) || 0,
-      databaseSize: Number(databaseSize),
-      runningOutbound: Boolean(runningOutbound),
-      revenueTarget: Number(revenueTarget),
+      industry: String(industry),
+      acv: String(acv),
+      salesCycle: String(salesCycle),
+      quarterlyRevenueTarget: Number(quarterlyRevenueTarget),
+      mqlsPerMonth: String(mqlsPerMonth),
+      mqlToSql: String(mqlToSql),
+      sqlToCustomer: String(sqlToCustomer),
+      currentMeetings: String(currentMeetings),
+      currentPipeline: String(currentPipeline),
+      marketingSpend: String(marketingSpend),
+      outboundType: String(outboundType),
+      databaseSize: String(databaseSize),
+      databaseAccuracy: String(databaseAccuracy),
+      crm: String(crm),
     }
 
     const results = calculate(formData)
@@ -47,11 +54,11 @@ export async function POST(request) {
       console.error('[SalesGarners] Email notification failed:', err.message)
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       results,
       emailStatus,
-      ...(emailError && { emailError })
+      ...(emailError && { emailError }),
     })
   } catch (error) {
     console.error('[SalesGarners] Send lead error:', error)

@@ -9,114 +9,261 @@ const SESSION_KEY = 'sg_assessment_data'
 const STEPS = [
   {
     id: 1,
-    title: 'Deal Size',
-    question: 'What is your average deal size (ACV)?',
-    subtitle: 'Annual Contract Value — the average revenue per customer per year.',
-    field: 'acv',
-    type: 'number',
-    placeholder: 'e.g. 25000',
-    prefix: '$',
-    validation: (v) => Number(v) > 0 ? null : 'Please enter a valid deal size greater than 0',
+    section: 'Market Context',
+    question: 'Which market are you targeting?',
+    field: 'targetMarket',
+    type: 'radio',
+    options: [
+      'United States',
+      'Europe',
+      'APAC',
+      'Global',
+    ],
+    validation: (v) => v ? null : 'Please select an option',
   },
   {
     id: 2,
-    title: 'Target Market',
-    question: 'Which market are you targeting?',
-    subtitle: 'Select your primary geographic focus for outbound activity.',
-    field: 'targetMarket',
-    type: 'select',
+    section: 'Market Context',
+    question: 'Which industry does your company operate in?',
+    field: 'industry',
+    type: 'radio',
     options: [
-      { value: 'us', label: 'United States' },
-      { value: 'eu', label: 'Europe' },
-      { value: 'apac', label: 'Asia Pacific' },
-      { value: 'latam', label: 'Latin America' },
-      { value: 'mea', label: 'Middle East & Africa' },
-      { value: 'global', label: 'Global' },
+      'SaaS',
+      'AI',
+      'FinTech',
+      'IT Services / Consulting',
+      'E-commerce / MarTech',
+      'Other',
     ],
-    validation: (v) => v ? null : 'Please select a target market',
+    validation: (v) => v ? null : 'Please select an option',
   },
   {
     id: 3,
-    title: 'Meeting Target',
-    question: 'How many qualified meetings do you want per month?',
-    subtitle: 'Your ideal number of sales-ready demos or discovery calls.',
-    field: 'monthlyMeetingTarget',
-    type: 'number',
-    placeholder: 'e.g. 20',
-    validation: (v) => Number(v) > 0 ? null : 'Please enter a meeting target greater than 0',
+    section: 'Deal Economics',
+    question: 'What is your average deal size (ACV)?',
+    field: 'acv',
+    type: 'radio',
+    options: [
+      { label: 'Less than $5,000', value: 'less_than_5k' },
+      { label: '$5,000 – $10,000', value: '5k_10k' },
+      { label: '$10,000 – $25,000', value: '10k_25k' },
+      { label: '$25,000 – $50,000', value: '25k_50k' },
+      { label: 'More than $50,000', value: 'more_than_50k' },
+    ],
+    validation: (v) => v ? null : 'Please select an option',
   },
   {
     id: 4,
-    title: 'Current Performance',
-    question: 'How many qualified meetings are you getting right now per month?',
-    subtitle: 'Be honest — this helps us calculate your pipeline gap accurately.',
-    field: 'currentMeetings',
-    type: 'number',
-    placeholder: 'e.g. 5',
-    validation: (v) => Number(v) >= 0 ? null : 'Please enter 0 or more',
+    section: 'Deal Economics',
+    question: 'What is your average sales cycle?',
+    field: 'salesCycle',
+    type: 'radio',
+    options: [
+      { label: 'Less than 30 days', value: 'less_than_30' },
+      { label: '30–60 days', value: '30_60' },
+      { label: '60–90 days', value: '60_90' },
+      { label: '90–180 days', value: '90_180' },
+      { label: 'More than 180 days', value: 'more_than_180' },
+    ],
+    validation: (v) => v ? null : 'Please select an option',
   },
   {
     id: 5,
-    title: 'Database Size',
-    question: 'How large is your current prospect database or contact list?',
-    subtitle: 'Total number of contacts you can reach via email or LinkedIn.',
-    field: 'databaseSize',
+    section: 'Revenue Targets',
+    question: 'What is your quarterly revenue target?',
+    field: 'quarterlyRevenueTarget',
     type: 'number',
-    placeholder: 'e.g. 5000',
-    validation: (v) => Number(v) > 0 ? null : 'Please enter a database size greater than 0',
+    placeholder: 'e.g. 900000',
+    prefix: '$',
+    validation: (v) => Number(v) > 0 ? null : 'Please enter a valid revenue target',
   },
   {
     id: 6,
-    title: 'Outbound Activity',
-    question: 'Are you currently running any outbound campaigns?',
-    subtitle: 'Cold email, LinkedIn outreach, or SDR calling sequences.',
-    field: 'runningOutbound',
+    section: 'Funnel Performance',
+    question: 'How many Marketing Qualified Leads (MQLs) do you generate per month?',
+    field: 'mqlsPerMonth',
     type: 'radio',
     options: [
-      { value: true, label: 'Yes, we are running outbound campaigns' },
-      { value: false, label: 'No, we are not running outbound yet' },
+      { label: '0–50', value: '0_50' },
+      { label: '50–100', value: '50_100' },
+      { label: '100–250', value: '100_250' },
+      { label: '250+', value: '250_plus' },
     ],
-    validation: (v) => v !== undefined && v !== null && v !== '' ? null : 'Please select an option',
+    validation: (v) => v ? null : 'Please select an option',
   },
   {
     id: 7,
-    title: 'Revenue Target',
-    question: 'What is your revenue target for the next 2 quarters?',
-    subtitle: 'Combined new revenue goal for Q1 and Q2 — or the next 6 months.',
-    field: 'revenueTarget',
-    type: 'number',
-    placeholder: 'e.g. 500000',
-    prefix: '$',
-    validation: (v) => Number(v) > 0 ? null : 'Please enter a revenue target greater than 0',
+    section: 'Funnel Performance',
+    question: 'MQL to SQL conversion rate',
+    field: 'mqlToSql',
+    type: 'radio',
+    options: [
+      { label: 'Less than 10%', value: 'less_than_10' },
+      { label: '10–20%', value: '10_20' },
+      { label: '20–30%', value: '20_30' },
+      { label: 'More than 30%', value: 'more_than_30' },
+    ],
+    validation: (v) => v ? null : 'Please select an option',
   },
   {
     id: 8,
-    title: 'Your Report',
-    question: 'Where should we send your personalised pipeline report?',
-    subtitle: 'You will receive a full PDF breakdown plus your GTM score instantly.',
-    type: 'multi',
+    section: 'Funnel Performance',
+    question: 'SQL to Customer conversion rate',
+    field: 'sqlToCustomer',
+    type: 'radio',
+    options: [
+      { label: 'Less than 10%', value: 'less_than_10' },
+      { label: '10–20%', value: '10_20' },
+      { label: '20–30%', value: '20_30' },
+      { label: 'More than 30%', value: 'more_than_30' },
+    ],
+    validation: (v) => v ? null : 'Please select an option',
+  },
+  {
+    id: 9,
+    section: 'Funnel Performance',
+    question: 'How many sales meetings does your team currently book per month?',
+    field: 'currentMeetings',
+    type: 'radio',
+    options: [
+      { label: '0–10', value: '0_10' },
+      { label: '10–25', value: '10_25' },
+      { label: '25–50', value: '25_50' },
+      { label: '50+', value: '50_plus' },
+    ],
+    validation: (v) => v ? null : 'Please select an option',
+  },
+  {
+    id: 10,
+    section: 'Pipeline & Marketing',
+    question: 'What is your current monthly pipeline value?',
+    field: 'currentPipeline',
+    type: 'radio',
+    options: [
+      { label: 'Less than $100K', value: 'less_than_100k' },
+      { label: '$100K – $500K', value: '100k_500k' },
+      { label: '$500K – $1M', value: '500k_1m' },
+      { label: 'More than $1M', value: 'more_than_1m' },
+    ],
+    validation: (v) => v ? null : 'Please select an option',
+  },
+  {
+    id: 11,
+    section: 'Pipeline & Marketing',
+    question: 'Monthly marketing spend',
+    field: 'marketingSpend',
+    type: 'radio',
+    options: [
+      { label: 'Less than $5K', value: 'less_than_5k' },
+      { label: '$5K – $20K', value: '5k_20k' },
+      { label: '$20K – $50K', value: '20k_50k' },
+      { label: 'More than $50K', value: 'more_than_50k' },
+    ],
+    validation: (v) => v ? null : 'Please select an option',
+  },
+  {
+    id: 12,
+    section: 'Outbound Infrastructure',
+    question: 'Are you currently running outbound campaigns?',
+    field: 'outboundType',
+    type: 'radio',
+    options: [
+      'None',
+      'Cold Email',
+      'LinkedIn Outreach',
+      'SDR Calling',
+      'Multi-channel outbound',
+    ],
+    validation: (v) => v ? null : 'Please select an option',
+  },
+  {
+    id: 13,
+    section: 'Data Infrastructure',
+    question: 'Database size',
+    field: 'databaseSize',
+    type: 'radio',
+    options: [
+      { label: 'Less than 5K', value: 'less_than_5k' },
+      { label: '5K–20K', value: '5k_20k' },
+      { label: '20K–50K', value: '20k_50k' },
+      { label: '50K–100K', value: '50k_100k' },
+      { label: 'More than 100K', value: 'more_than_100k' },
+    ],
+    validation: (v) => v ? null : 'Please select an option',
+  },
+  {
+    id: 14,
+    section: 'Data Infrastructure',
+    question: 'Database accuracy',
+    field: 'databaseAccuracy',
+    type: 'radio',
+    options: [
+      { label: 'Less than 60%', value: 'less_than_60' },
+      { label: '60–75%', value: '60_75' },
+      { label: '75–90%', value: '75_90' },
+      { label: 'More than 90%', value: 'more_than_90' },
+    ],
+    validation: (v) => v ? null : 'Please select an option',
+  },
+  {
+    id: 15,
+    section: 'CRM',
+    question: 'Which CRM do you use?',
+    field: 'crm',
+    type: 'radio',
+    options: [
+      'HubSpot',
+      'Salesforce',
+      'Pipedrive',
+      'Zoho',
+      'Other',
+      'None',
+    ],
+    validation: (v) => v ? null : 'Please select an option',
+  },
+  {
+    id: 16,
+    section: 'Contact Information',
+    question: 'Where should we send your personalized pipeline report?',
+    type: 'contact',
     fields: [
-      { field: 'name', type: 'text', placeholder: 'Your full name', label: 'Full Name' },
-      { field: 'email', type: 'email', placeholder: 'Work email address', label: 'Work Email' },
+      { field: 'name', type: 'text', placeholder: 'Full Name', label: 'Full Name', required: true },
+      { field: 'companyName', type: 'text', placeholder: 'Company Name', label: 'Company Name', required: true },
+      { field: 'email', type: 'email', placeholder: 'Work Email', label: 'Work Email', required: true },
+      { field: 'companyWebsite', type: 'text', placeholder: 'Company Website', label: 'Company Website', required: true },
+      { field: 'jobTitle', type: 'text', placeholder: 'Job Title (optional)', label: 'Job Title', required: false },
     ],
     validation: (v, formData) => {
-      if (!formData.name?.trim()) return 'Please enter your name'
+      if (!formData.name?.trim()) return 'Please enter your full name'
+      if (!formData.companyName?.trim()) return 'Please enter your company name'
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return 'Please enter a valid work email'
+      if (!formData.companyWebsite?.trim()) return 'Please enter your company website'
       return null
     },
   },
 ]
 
 const DEFAULT_FORM = {
-  acv: '',
   targetMarket: '',
-  monthlyMeetingTarget: '',
+  industry: '',
+  acv: '',
+  salesCycle: '',
+  quarterlyRevenueTarget: '',
+  mqlsPerMonth: '',
+  mqlToSql: '',
+  sqlToCustomer: '',
   currentMeetings: '',
+  currentPipeline: '',
+  marketingSpend: '',
+  outboundType: '',
   databaseSize: '',
-  runningOutbound: null,
-  revenueTarget: '',
+  databaseAccuracy: '',
+  crm: '',
   name: '',
+  companyName: '',
   email: '',
+  companyWebsite: '',
+  jobTitle: '',
 }
 
 export default function AssessmentPage() {
@@ -152,7 +299,7 @@ export default function AssessmentPage() {
 
   function validateCurrentStep() {
     const s = STEPS[currentStep - 1]
-    if (s.type === 'multi') return s.validation(null, formData)
+    if (s.type === 'contact') return s.validation(null, formData)
     if (s.field) return s.validation(formData[s.field])
     return null
   }
@@ -169,12 +316,6 @@ export default function AssessmentPage() {
     if (currentStep > 1) setCurrentStep((prev) => prev - 1)
   }
 
-  function handleKeyDown(e) {
-    if (e.key === 'Enter') {
-      currentStep === STEPS.length ? handleSubmit() : handleNext()
-    }
-  }
-
   async function handleSubmit() {
     const err = validateCurrentStep()
     if (err) { setError(err); return }
@@ -184,12 +325,7 @@ export default function AssessmentPage() {
     try {
       const payload = {
         ...formData,
-        acv: Number(formData.acv),
-        monthlyMeetingTarget: Number(formData.monthlyMeetingTarget),
-        currentMeetings: Number(formData.currentMeetings) || 0,
-        databaseSize: Number(formData.databaseSize),
-        revenueTarget: Number(formData.revenueTarget),
-        runningOutbound: formData.runningOutbound === true || formData.runningOutbound === 'true',
+        quarterlyRevenueTarget: Number(formData.quarterlyRevenueTarget),
       }
 
       const res = await fetch('/api/send-lead', {
@@ -212,6 +348,9 @@ export default function AssessmentPage() {
 
   const progressPercent = ((currentStep - 1) / (STEPS.length - 1)) * 100
 
+  const getOptionValue = (opt) => typeof opt === 'object' ? opt.value : opt
+  const getOptionLabel = (opt) => typeof opt === 'object' ? opt.label : opt
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-gradient-to-r from-violet-600 to-pink-500 text-white text-center text-sm font-medium py-2 tracking-wide">
@@ -230,7 +369,7 @@ export default function AssessmentPage() {
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
-            <span className="font-medium text-violet-700">{step.title}</span>
+            <span className="font-medium text-violet-700">{step.section}</span>
             <span>{Math.round(progressPercent)}% complete</span>
           </div>
           <div className="bg-gray-200 rounded-full h-2">
@@ -238,26 +377,6 @@ export default function AssessmentPage() {
               className="bg-gradient-to-r from-violet-600 to-pink-500 rounded-full h-2 transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
             />
-          </div>
-          <div className="flex justify-between mt-2">
-            {STEPS.map((s) => (
-              <div
-                key={s.id}
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                  s.id < currentStep
-                    ? 'bg-gradient-to-r from-violet-600 to-pink-500 text-white'
-                    : s.id === currentStep
-                    ? 'bg-violet-600 text-white ring-2 ring-violet-300'
-                    : 'bg-gray-200 text-gray-400'
-                }`}
-              >
-                {s.id < currentStep ? (
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : s.id}
-              </div>
-            ))}
           </div>
         </div>
       </div>
@@ -268,11 +387,38 @@ export default function AssessmentPage() {
             <p className="text-sm font-semibold text-violet-700 uppercase tracking-wide mb-2">
               Question {currentStep} of {STEPS.length}
             </p>
-            <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 mb-3">{step.question}</h1>
-            <p className="text-gray-500">{step.subtitle}</p>
+            <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 mb-1">{step.question}</h1>
           </div>
 
           <div className="mb-6">
+            {step.type === 'radio' && (
+              <div className="space-y-3">
+                {step.options.map((opt) => {
+                  const val = getOptionValue(opt)
+                  const label = getOptionLabel(opt)
+                  return (
+                    <label
+                      key={val}
+                      className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                        formData[step.field] === val
+                          ? 'border-violet-600 bg-violet-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={step.field}
+                        checked={formData[step.field] === val}
+                        onChange={() => updateField(step.field, val)}
+                        className="accent-violet-600 w-5 h-5"
+                      />
+                      <span className="font-medium text-gray-900">{label}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            )}
+
             {step.type === 'number' && (
               <div className="relative">
                 {step.prefix && (
@@ -285,7 +431,7 @@ export default function AssessmentPage() {
                   min="0"
                   value={formData[step.field]}
                   onChange={(e) => updateField(step.field, e.target.value)}
-                  onKeyDown={handleKeyDown}
+                  onKeyDown={(e) => e.key === 'Enter' && handleNext()}
                   placeholder={step.placeholder}
                   className={`w-full border-2 rounded-xl py-4 text-lg font-medium text-gray-900 focus:outline-none focus:border-violet-600 transition-colors ${
                     step.prefix ? 'pl-8 pr-4' : 'px-4'
@@ -294,57 +440,19 @@ export default function AssessmentPage() {
               </div>
             )}
 
-            {step.type === 'select' && (
-              <select
-                value={formData[step.field]}
-                onChange={(e) => updateField(step.field, e.target.value)}
-                className={`w-full border-2 rounded-xl px-4 py-4 text-lg font-medium text-gray-900 focus:outline-none focus:border-violet-600 transition-colors bg-white ${
-                  error ? 'border-red-400' : 'border-gray-200'
-                }`}
-              >
-                <option value="">Select a market...</option>
-                {step.options.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            )}
-
-            {step.type === 'radio' && (
-              <div className="space-y-3">
-                {step.options.map((opt) => (
-                  <label
-                    key={String(opt.value)}
-                    className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                      formData[step.field] === opt.value
-                        ? 'border-violet-600 bg-violet-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name={step.field}
-                      checked={formData[step.field] === opt.value}
-                      onChange={() => updateField(step.field, opt.value)}
-                      className="accent-violet-600 w-5 h-5"
-                    />
-                    <span className="font-medium text-gray-900">{opt.label}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-
-            {step.type === 'multi' && (
+            {step.type === 'contact' && (
               <div className="space-y-4">
                 {step.fields.map((f) => (
                   <div key={f.field}>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">{f.label}</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      {f.label}{f.required ? '' : ' (optional)'}
+                    </label>
                     <input
                       type={f.type}
                       value={formData[f.field]}
                       onChange={(e) => updateField(f.field, e.target.value)}
-                      onKeyDown={handleKeyDown}
                       placeholder={f.placeholder}
-                      className={`w-full border-2 rounded-xl px-4 py-4 text-lg font-medium text-gray-900 focus:outline-none focus:border-violet-600 transition-colors ${
+                      className={`w-full border-2 rounded-xl px-4 py-3 text-base font-medium text-gray-900 focus:outline-none focus:border-violet-600 transition-colors ${
                         error ? 'border-red-400' : 'border-gray-200'
                       }`}
                     />
