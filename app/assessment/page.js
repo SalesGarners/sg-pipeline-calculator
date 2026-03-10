@@ -13,12 +13,7 @@ const STEPS = [
     question: 'Which market are you targeting?',
     field: 'targetMarket',
     type: 'radio',
-    options: [
-      'United States',
-      'Europe',
-      'APAC',
-      'Global',
-    ],
+    options: ['United States', 'Europe', 'APAC', 'Global'],
     validation: (v) => v ? null : 'Please select an option',
   },
   {
@@ -27,14 +22,7 @@ const STEPS = [
     question: 'Which industry does your company operate in?',
     field: 'industry',
     type: 'radio',
-    options: [
-      'SaaS',
-      'AI',
-      'FinTech',
-      'IT Services / Consulting',
-      'E-commerce / MarTech',
-      'Other',
-    ],
+    options: ['SaaS', 'AI', 'FinTech', 'IT Services / Consulting', 'E-commerce / MarTech', 'Other'],
     validation: (v) => v ? null : 'Please select an option',
   },
   {
@@ -136,20 +124,6 @@ const STEPS = [
   {
     id: 10,
     section: 'Pipeline & Marketing',
-    question: 'What is your current monthly pipeline value?',
-    field: 'currentPipeline',
-    type: 'radio',
-    options: [
-      { label: 'Less than $100K', value: 'less_than_100k' },
-      { label: '$100K – $500K', value: '100k_500k' },
-      { label: '$500K – $1M', value: '500k_1m' },
-      { label: 'More than $1M', value: 'more_than_1m' },
-    ],
-    validation: (v) => v ? null : 'Please select an option',
-  },
-  {
-    id: 11,
-    section: 'Pipeline & Marketing',
     question: 'Monthly marketing spend',
     field: 'marketingSpend',
     type: 'radio',
@@ -162,22 +136,16 @@ const STEPS = [
     validation: (v) => v ? null : 'Please select an option',
   },
   {
-    id: 12,
+    id: 11,
     section: 'Outbound Infrastructure',
     question: 'Are you currently running outbound campaigns?',
     field: 'outboundType',
     type: 'radio',
-    options: [
-      'None',
-      'Cold Email',
-      'LinkedIn Outreach',
-      'SDR Calling',
-      'Multi-channel outbound',
-    ],
+    options: ['None', 'Cold Email', 'LinkedIn Outreach', 'SDR Calling', 'Multi-channel outbound'],
     validation: (v) => v ? null : 'Please select an option',
   },
   {
-    id: 13,
+    id: 12,
     section: 'Data Infrastructure',
     question: 'Database size',
     field: 'databaseSize',
@@ -192,7 +160,7 @@ const STEPS = [
     validation: (v) => v ? null : 'Please select an option',
   },
   {
-    id: 14,
+    id: 13,
     section: 'Data Infrastructure',
     question: 'Database accuracy',
     field: 'databaseAccuracy',
@@ -206,23 +174,16 @@ const STEPS = [
     validation: (v) => v ? null : 'Please select an option',
   },
   {
-    id: 15,
+    id: 14,
     section: 'CRM',
     question: 'Which CRM do you use?',
     field: 'crm',
     type: 'radio',
-    options: [
-      'HubSpot',
-      'Salesforce',
-      'Pipedrive',
-      'Zoho',
-      'Other',
-      'None',
-    ],
+    options: ['HubSpot', 'Salesforce', 'Pipedrive', 'Zoho', 'Other', 'None'],
     validation: (v) => v ? null : 'Please select an option',
   },
   {
-    id: 16,
+    id: 15,
     section: 'Contact Information',
     question: 'Where should we send your personalized pipeline report?',
     type: 'contact',
@@ -244,26 +205,11 @@ const STEPS = [
 ]
 
 const DEFAULT_FORM = {
-  targetMarket: '',
-  industry: '',
-  acv: '',
-  salesCycle: '',
-  quarterlyRevenueTarget: '',
-  mqlsPerMonth: '',
-  mqlToSql: '',
-  sqlToCustomer: '',
-  currentMeetings: '',
-  currentPipeline: '',
-  marketingSpend: '',
-  outboundType: '',
-  databaseSize: '',
-  databaseAccuracy: '',
-  crm: '',
-  name: '',
-  companyName: '',
-  email: '',
-  companyWebsite: '',
-  jobTitle: '',
+  targetMarket: '', industry: '', acv: '', salesCycle: '',
+  quarterlyRevenueTarget: '', mqlsPerMonth: '', mqlToSql: '',
+  sqlToCustomer: '', currentMeetings: '', marketingSpend: '',
+  outboundType: '', databaseSize: '', databaseAccuracy: '', crm: '',
+  name: '', companyName: '', email: '', companyWebsite: '', jobTitle: '',
 }
 
 export default function AssessmentPage() {
@@ -321,22 +267,15 @@ export default function AssessmentPage() {
     if (err) { setError(err); return }
     setSubmitting(true)
     setError('')
-
     try {
-      const payload = {
-        ...formData,
-        quarterlyRevenueTarget: Number(formData.quarterlyRevenueTarget),
-      }
-
+      const payload = { ...formData, quarterlyRevenueTarget: Number(formData.quarterlyRevenueTarget) }
       const res = await fetch('/api/send-lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-
       const data = await res.json()
       if (!res.ok || !data.success) throw new Error(data.error || 'Submission failed')
-
       sessionStorage.setItem('sg_results', JSON.stringify({ formData: payload, results: data.results }))
       sessionStorage.removeItem(SESSION_KEY)
       router.push('/results')
@@ -347,7 +286,6 @@ export default function AssessmentPage() {
   }
 
   const progressPercent = ((currentStep - 1) / (STEPS.length - 1)) * 100
-
   const getOptionValue = (opt) => typeof opt === 'object' ? opt.value : opt
   const getOptionLabel = (opt) => typeof opt === 'object' ? opt.label : opt
 
@@ -356,7 +294,6 @@ export default function AssessmentPage() {
       <div className="bg-gradient-to-r from-violet-600 to-pink-500 text-white text-center text-sm font-medium py-2 tracking-wide">
         B2B CONTENT SYNDICATION SERVICES
       </div>
-
       <nav className="bg-white border-b border-gray-100 px-6 py-4">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <Link href="/">
@@ -365,7 +302,6 @@ export default function AssessmentPage() {
           <span className="text-sm text-gray-500 font-medium">Step {currentStep} of {STEPS.length}</span>
         </div>
       </nav>
-
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
@@ -373,23 +309,16 @@ export default function AssessmentPage() {
             <span>{Math.round(progressPercent)}% complete</span>
           </div>
           <div className="bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-gradient-to-r from-violet-600 to-pink-500 rounded-full h-2 transition-all duration-500"
-              style={{ width: `${progressPercent}%` }}
-            />
+            <div className="bg-gradient-to-r from-violet-600 to-pink-500 rounded-full h-2 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
           </div>
         </div>
       </div>
-
       <div className="max-w-3xl mx-auto px-6 py-12">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 lg:p-12">
           <div className="mb-8">
-            <p className="text-sm font-semibold text-violet-700 uppercase tracking-wide mb-2">
-              Question {currentStep} of {STEPS.length}
-            </p>
+            <p className="text-sm font-semibold text-violet-700 uppercase tracking-wide mb-2">Question {currentStep} of {STEPS.length}</p>
             <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 mb-1">{step.question}</h1>
           </div>
-
           <div className="mb-6">
             {step.type === 'radio' && (
               <div className="space-y-3">
@@ -397,120 +326,60 @@ export default function AssessmentPage() {
                   const val = getOptionValue(opt)
                   const label = getOptionLabel(opt)
                   return (
-                    <label
-                      key={val}
-                      className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                        formData[step.field] === val
-                          ? 'border-violet-600 bg-violet-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name={step.field}
-                        checked={formData[step.field] === val}
-                        onChange={() => updateField(step.field, val)}
-                        className="accent-violet-600 w-5 h-5"
-                      />
+                    <label key={val} className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${formData[step.field] === val ? 'border-violet-600 bg-violet-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <input type="radio" name={step.field} checked={formData[step.field] === val} onChange={() => updateField(step.field, val)} className="accent-violet-600 w-5 h-5" />
                       <span className="font-medium text-gray-900">{label}</span>
                     </label>
                   )
                 })}
               </div>
             )}
-
             {step.type === 'number' && (
               <div className="relative">
-                {step.prefix && (
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-lg">
-                    {step.prefix}
-                  </span>
-                )}
+                {step.prefix && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-lg">{step.prefix}</span>}
                 <input
-                  type="number"
-                  min="0"
+                  type="number" min="0"
                   value={formData[step.field]}
                   onChange={(e) => updateField(step.field, e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleNext()}
                   placeholder={step.placeholder}
-                  className={`w-full border-2 rounded-xl py-4 text-lg font-medium text-gray-900 focus:outline-none focus:border-violet-600 transition-colors ${
-                    step.prefix ? 'pl-8 pr-4' : 'px-4'
-                  } ${error ? 'border-red-400' : 'border-gray-200'}`}
+                  className={`w-full border-2 rounded-xl py-4 text-lg font-medium text-gray-900 focus:outline-none focus:border-violet-600 transition-colors ${step.prefix ? 'pl-8 pr-4' : 'px-4'} ${error ? 'border-red-400' : 'border-gray-200'}`}
                 />
               </div>
             )}
-
             {step.type === 'contact' && (
               <div className="space-y-4">
                 {step.fields.map((f) => (
                   <div key={f.field}>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      {f.label}{f.required ? '' : ' (optional)'}
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">{f.label}{!f.required ? ' (optional)' : ''}</label>
                     <input
-                      type={f.type}
-                      value={formData[f.field]}
+                      type={f.type} value={formData[f.field]}
                       onChange={(e) => updateField(f.field, e.target.value)}
                       placeholder={f.placeholder}
-                      className={`w-full border-2 rounded-xl px-4 py-3 text-base font-medium text-gray-900 focus:outline-none focus:border-violet-600 transition-colors ${
-                        error ? 'border-red-400' : 'border-gray-200'
-                      }`}
+                      className={`w-full border-2 rounded-xl px-4 py-3 text-base font-medium text-gray-900 focus:outline-none focus:border-violet-600 transition-colors ${error ? 'border-red-400' : 'border-gray-200'}`}
                     />
                   </div>
                 ))}
               </div>
             )}
           </div>
-
           {error && (
             <p className="text-red-500 text-sm font-medium mb-6 flex items-center gap-2">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
               {error}
             </p>
           )}
-
           <div className="flex items-center justify-between gap-4">
-            <button
-              onClick={handleBack}
-              disabled={currentStep === 1}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                currentStep === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 cursor-pointer'
-              }`}
-            >
-              Back
-            </button>
-
+            <button onClick={handleBack} disabled={currentStep === 1} className={`px-6 py-3 rounded-xl font-semibold transition-all ${currentStep === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 cursor-pointer'}`}>Back</button>
             {currentStep < STEPS.length ? (
-              <button
-                onClick={handleNext}
-                className="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-10 py-3 rounded-xl transition-colors cursor-pointer"
-              >
-                Continue
-              </button>
+              <button onClick={handleNext} className="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-10 py-3 rounded-xl transition-colors cursor-pointer">Continue</button>
             ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-10 py-3 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2"
-              >
-                {submitting ? (
-                  <>
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    Calculating...
-                  </>
-                ) : 'Get My Results'}
+              <button onClick={handleSubmit} disabled={submitting} className="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-10 py-3 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2">
+                {submitting ? (<><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>Calculating...</>) : 'Get My Results'}
               </button>
             )}
           </div>
-
-          <p className="text-center text-xs text-gray-400 mt-6">
-            Your data is secure and will never be shared with third parties.
-          </p>
+          <p className="text-center text-xs text-gray-400 mt-6">Your data is secure and will never be shared with third parties.</p>
         </div>
       </div>
     </div>

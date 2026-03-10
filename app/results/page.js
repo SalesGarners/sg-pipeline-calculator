@@ -14,22 +14,14 @@ function ScoreArc({ score, label }) {
   const circumference = Math.PI * 54
   const offset = circumference - (score / 100) * circumference
   const color = score >= 80 ? '#10b981' : score >= 65 ? '#7C3AED' : score >= 40 ? '#f59e0b' : '#ef4444'
-
   return (
     <div className="flex flex-col items-center">
       <div className="relative">
         <svg width="140" height="80" viewBox="0 0 140 80">
           <path d="M 14 70 A 56 56 0 0 1 126 70" fill="none" stroke="#e5e7eb" strokeWidth="12" strokeLinecap="round" />
-          <path
-            d="M 14 70 A 56 56 0 0 1 126 70"
-            fill="none"
-            stroke={color}
-            strokeWidth="12"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            style={{ transition: 'stroke-dashoffset 1.5s ease-out' }}
-          />
+          <path d="M 14 70 A 56 56 0 0 1 126 70" fill="none" stroke={color} strokeWidth="12" strokeLinecap="round"
+            strokeDasharray={circumference} strokeDashoffset={offset}
+            style={{ transition: 'stroke-dashoffset 1.5s ease-out' }} />
         </svg>
         <div className="absolute bottom-0 inset-x-0 flex flex-col items-center">
           <span className="text-3xl font-extrabold text-gray-900">{score}</span>
@@ -41,25 +33,12 @@ function ScoreArc({ score, label }) {
   )
 }
 
-function GapCard({ title, current, potential, gap, currentLabel, potentialLabel, gapLabel, isCurrency }) {
-  const fmt = isCurrency ? formatCurrency : (v) => v
+function FunnelRow({ label, current, required }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6">
-      <h3 className="font-bold text-gray-900 text-base mb-4">{title}</h3>
-      <div className="space-y-3">
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-500">{currentLabel}</span>
-          <span className="font-semibold text-gray-900">{fmt(current)}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-500">{potentialLabel}</span>
-          <span className="font-semibold text-violet-700">{fmt(potential)}</span>
-        </div>
-        <div className="border-t border-gray-100 pt-3 flex justify-between text-sm">
-          <span className="font-semibold text-gray-700">{gapLabel}</span>
-          <span className="font-bold text-green-600">+{fmt(gap)}</span>
-        </div>
-      </div>
+    <div className="grid grid-cols-3 gap-2 py-3 border-b border-gray-100 last:border-0 items-center">
+      <span className="text-sm text-gray-500 font-medium">{label}</span>
+      <span className="text-sm font-bold text-gray-900 text-center">{typeof current === 'number' ? current.toLocaleString() : current}</span>
+      <span className="text-sm font-bold text-violet-700 text-center">{typeof required === 'number' ? required.toLocaleString() : required}</span>
     </div>
   )
 }
@@ -77,9 +56,7 @@ export default function ResultsPage() {
       const raw = sessionStorage.getItem('sg_results')
       if (!raw) { router.push('/assessment'); return }
       setData(JSON.parse(raw))
-    } catch (e) {
-      router.push('/assessment')
-    }
+    } catch (e) { router.push('/assessment') }
   }, [router])
 
   async function handleDownloadPDF() {
@@ -90,18 +67,21 @@ export default function ResultsPage() {
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
       const { formData, results } = data
       const {
-        expectedMeetings, currentMeetings, meetingGap,
-        currentPipeline, requiredPipeline, pipelineGap,
-        monthlyRevenueTarget, revenueMonthly, revenueGap,
-        pipelineQuarter, gtmScore, gtmLabel, plan,
+        currentEngaged, currentHighIntent, currentSQLs, currentMeetingsFunnel,
+        requiredLeads, requiredHighIntent, requiredSQLs, requiredMeetings, requiredDeals,
+        expectedMeetings, pipelineQuarter, revenueMonthly, monthlyTarget,
+        currentPipeline, requiredPipelineLow, currentRevenueForecast,
+        meetingGap, pipelineGap, revenueGap,
+        gtmScore, gtmLabel, plan, industry,
       } = results
 
       const purple = [124, 58, 237]
       const dark = [17, 24, 39]
       const gray = [107, 114, 128]
       const lightGray = [243, 244, 246]
+      const green = [16, 185, 129]
 
-      // Header
+      // ── Header ──
       doc.setFillColor(...purple)
       doc.rect(0, 0, 210, 35, 'F')
       doc.setFontSize(16)
@@ -115,16 +95,16 @@ export default function ResultsPage() {
 
       let y = 44
 
-      // KPI Cards
+      // ── KPI Cards ──
       doc.setFontSize(12)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(...dark)
       doc.text('Key Metrics', 15, y)
-      y += 6
+      y += 5
       doc.setDrawColor(...purple)
       doc.setLineWidth(0.5)
       doc.line(15, y, 195, y)
-      y += 6
+      y += 5
 
       const kpis = [
         { label: 'GTM Readiness Score', value: `${gtmScore}/100 — ${gtmLabel}` },
@@ -132,95 +112,209 @@ export default function ResultsPage() {
         { label: 'Pipeline Potential/Quarter', value: formatCurrency(pipelineQuarter) },
         { label: 'Revenue Potential/Month', value: formatCurrency(revenueMonthly) },
       ]
-
       kpis.forEach((k, i) => {
         const col = i % 2
         const row = Math.floor(i / 2)
         const x = 15 + col * 95
-        const boxY = y + row * 26
+        const boxY = y + row * 24
         doc.setFillColor(...lightGray)
-        doc.roundedRect(x, boxY, 88, 20, 2, 2, 'F')
-        doc.setFontSize(8)
+        doc.roundedRect(x, boxY, 88, 18, 2, 2, 'F')
+        doc.setFontSize(7)
         doc.setFont('helvetica', 'normal')
         doc.setTextColor(...gray)
-        doc.text(k.label.toUpperCase(), x + 4, boxY + 7)
+        doc.text(k.label.toUpperCase(), x + 4, boxY + 6)
         doc.setFontSize(11)
         doc.setFont('helvetica', 'bold')
         doc.setTextColor(...purple)
-        doc.text(k.value, x + 4, boxY + 16)
+        doc.text(k.value, x + 4, boxY + 14)
       })
+      y += 54
 
-      y += 58
-
-      // Gap Analysis
+      // ── Funnel Comparison Table ──
       doc.setFontSize(12)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(...dark)
-      doc.text('Gap Analysis', 15, y)
-      y += 6
+      doc.text('Funnel Comparison — Current vs Required', 15, y)
+      y += 5
       doc.setDrawColor(...purple)
       doc.line(15, y, 195, y)
-      y += 6
+      y += 5
 
-      const gaps = [
-        { label: 'Meeting Gap', current: `Current: ${currentMeetings}`, potential: `Potential: ${expectedMeetings}`, gap: `Gap: +${meetingGap} meetings/month` },
-        { label: 'Pipeline Gap', current: `Current: ${formatCurrency(currentPipeline)}`, potential: `Required: ${formatCurrency(requiredPipeline)}`, gap: `Gap: ${formatCurrency(pipelineGap)}` },
-        { label: 'Revenue Gap', current: `Target: ${formatCurrency(monthlyRevenueTarget)}/month`, potential: `Modeled: ${formatCurrency(revenueMonthly)}/month`, gap: `Gap: ${formatCurrency(revenueGap)}/month` },
+      // Table header
+      doc.setFillColor(...purple)
+      doc.rect(15, y, 180, 8, 'F')
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(255, 255, 255)
+      doc.text('Funnel Stage', 19, y + 5.5)
+      doc.text('Current', 100, y + 5.5)
+      doc.text('Required (to hit target)', 135, y + 5.5)
+      y += 8
+
+      const funnelRows = [
+        { label: 'Leads / High Intent', current: currentHighIntent, required: requiredHighIntent },
+        { label: 'SQLs', current: currentSQLs, required: requiredSQLs },
+        { label: 'Meetings / Month', current: currentMeetingsFunnel, required: requiredMeetings },
+        { label: 'Deals Closed', current: Math.round(currentMeetingsFunnel * 0.15), required: requiredDeals },
       ]
 
+      funnelRows.forEach((row, i) => {
+        doc.setFillColor(i % 2 === 0 ? 250 : 255, i % 2 === 0 ? 250 : 255, i % 2 === 0 ? 250 : 255)
+        doc.rect(15, y, 180, 8, 'F')
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(...dark)
+        doc.text(row.label, 19, y + 5.5)
+        doc.setTextColor(...gray)
+        doc.text(String(row.current), 100, y + 5.5)
+        doc.setTextColor(...purple)
+        doc.text(String(row.required), 135, y + 5.5)
+        y += 8
+      })
+      y += 6
+
+      // ── Bar Chart — Current vs Required ──
+      doc.setFontSize(12)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(...dark)
+      doc.text('Gap Analysis — Current vs Required', 15, y)
+      y += 5
+      doc.setDrawColor(...purple)
+      doc.line(15, y, 195, y)
+      y += 8
+
+      const chartData = [
+        { label: 'Meetings', current: currentMeetingsFunnel, required: requiredMeetings },
+        { label: 'Pipeline ($K)', current: Math.round(currentPipeline / 1000), required: Math.round(requiredPipelineLow / 1000) },
+        { label: 'Revenue ($K)', current: Math.round(currentRevenueForecast / 1000), required: Math.round(monthlyTarget / 1000) },
+      ]
+
+      const chartMaxVal = Math.max(...chartData.map(d => Math.max(d.current, d.required)))
+      const chartWidth = 160
+      const chartHeight = 40
+      const chartX = 20
+      const barGroupWidth = chartWidth / chartData.length
+      const barWidth = 14
+      const chartBaseY = y + chartHeight
+
+      // Y axis
+      doc.setDrawColor(200, 200, 200)
+      doc.setLineWidth(0.3)
+      doc.line(chartX, y, chartX, chartBaseY)
+      doc.line(chartX, chartBaseY, chartX + chartWidth, chartBaseY)
+
+      chartData.forEach((item, i) => {
+        const groupX = chartX + i * barGroupWidth + barGroupWidth / 2 - barWidth - 2
+
+        // Current bar (gray)
+        const currentH = chartMaxVal > 0 ? Math.max((item.current / chartMaxVal) * chartHeight, 1) : 1
+        doc.setFillColor(180, 180, 180)
+        doc.rect(groupX, chartBaseY - currentH, barWidth, currentH, 'F')
+
+        // Value label above current bar
+        doc.setFontSize(6)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(...gray)
+        doc.text(String(item.current), groupX + 1, chartBaseY - currentH - 1.5)
+
+        // Required bar (purple)
+        const requiredH = chartMaxVal > 0 ? Math.max((item.required / chartMaxVal) * chartHeight, 1) : 1
+        doc.setFillColor(...purple)
+        doc.rect(groupX + barWidth + 2, chartBaseY - requiredH, barWidth, requiredH, 'F')
+
+        // Value label above required bar
+        doc.setTextColor(...purple)
+        doc.text(String(item.required), groupX + barWidth + 3, chartBaseY - requiredH - 1.5)
+
+        // X axis label centered under group
+        doc.setFontSize(7)
+        doc.setTextColor(...gray)
+        doc.text(item.label, groupX, chartBaseY + 5)
+      })
+
+      // Legend
+      doc.setFillColor(180, 180, 180)
+      doc.rect(chartX + chartWidth + 5, y + 5, 5, 4, 'F')
+      doc.setFontSize(7)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(...gray)
+      doc.text('Current', chartX + chartWidth + 12, y + 9)
+
+      doc.setFillColor(...purple)
+      doc.rect(chartX + chartWidth + 5, y + 14, 5, 4, 'F')
+      doc.setTextColor(...purple)
+      doc.text('Required', chartX + chartWidth + 12, y + 18)
+
+      y = chartBaseY + 14
+
+      // ── Gap Summary ──
+      doc.setFontSize(12)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(...dark)
+      doc.text('Gap Summary', 15, y)
+      y += 5
+      doc.setDrawColor(...purple)
+      doc.line(15, y, 195, y)
+      y += 5
+
+      const gaps = [
+        { label: 'Meeting Gap', value: `+${meetingGap} meetings/month needed` },
+        { label: 'Pipeline Gap', value: `${formatCurrency(pipelineGap)} additional pipeline required` },
+        { label: 'Revenue Gap', value: `${formatCurrency(revenueGap)}/month to reach target` },
+      ]
       gaps.forEach((g) => {
         doc.setFillColor(...lightGray)
-        doc.roundedRect(15, y, 180, 22, 2, 2, 'F')
+        doc.roundedRect(15, y, 180, 10, 2, 2, 'F')
         doc.setFontSize(9)
         doc.setFont('helvetica', 'bold')
         doc.setTextColor(...dark)
         doc.text(g.label, 19, y + 7)
-        doc.setFontSize(8)
         doc.setFont('helvetica', 'normal')
-        doc.setTextColor(...gray)
-        doc.text(`${g.current}   |   ${g.potential}   |   ${g.gap}`, 19, y + 15)
-        y += 28
+        doc.setTextColor(...purple)
+        doc.text(g.value, 70, y + 7)
+        y += 14
       })
 
-      y += 4
+      // ── Page 2 — Recommended Plan + CTA ──
+      doc.addPage()
+      y = 20
 
-      // Recommended Plan
+      // ── Recommended Plan ──
       doc.setFillColor(...purple)
-      doc.roundedRect(15, y, 180, 45, 3, 3, 'F')
-      doc.setFontSize(10)
+      doc.roundedRect(15, y, 180, 52, 3, 3, 'F')
+      doc.setFontSize(9)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(255, 255, 255)
       doc.text('Recommended Plan', 22, y + 10)
       doc.setFontSize(13)
       doc.text(`${plan.name} — ${plan.price}`, 22, y + 20)
-      doc.setFontSize(8)
+      doc.setFontSize(9)
       doc.setFont('helvetica', 'normal')
       plan.outcomes.forEach((outcome, i) => {
-        doc.text(`• ${outcome}`, 22, y + 30 + i * 6)
+        doc.text(`• ${outcome}`, 22, y + 32 + i * 8)
       })
+      y += 62
 
-      y += 55
-
-      // CTA
+      // ── CTA ──
       doc.setFontSize(10)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(...dark)
       doc.text('Review your assessment and pipeline opportunities with our team.', 15, y)
-      y += 8
+      y += 9
       doc.setFillColor(...purple)
-      doc.roundedRect(15, y, 70, 10, 2, 2, 'F')
+      doc.roundedRect(15, y, 80, 11, 2, 2, 'F')
       doc.setFontSize(9)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(255, 255, 255)
-      doc.text('Visit: salesgarners.com/contact-us', 19, y + 6.5)
+      doc.text('Visit: salesgarners.com/contact-us', 19, y + 7.5)
 
-      // Footer
-      const footerY = Math.max(y + 20, 275)
+      // ── Footer ──
+      const footerY = 278
       doc.setFontSize(8)
       doc.setFont('helvetica', 'normal')
       doc.setTextColor(...gray)
       doc.text('SalesGarners Marketing Pvt. Ltd.  |  salesgarners.com', 15, footerY)
-      doc.text(`© ${currentYear} SalesGarners. Confidential — prepared exclusively for ${formData.name}`, 15, footerY + 6)
+      doc.text(`© ${currentYear} SalesGarners. Confidential — prepared exclusively for ${formData.name}`, 15, footerY + 5)
 
       doc.save(`SalesGarners_Pipeline_Report_${formData.name.replace(/\s+/g, '_')}.pdf`)
     } catch (err) {
@@ -247,10 +341,12 @@ export default function ResultsPage() {
 
   const { formData, results } = data
   const {
-    expectedMeetings, currentMeetings, meetingGap,
-    currentPipeline, requiredPipeline, pipelineGap,
-    monthlyRevenueTarget, revenueMonthly, revenueGap,
-    pipelineQuarter, gtmScore, gtmLabel, plan,
+    currentEngaged, currentHighIntent, currentSQLs, currentMeetingsFunnel,
+    requiredLeads, requiredHighIntent, requiredSQLs, requiredMeetings, requiredDeals,
+    expectedMeetings, pipelineQuarter, revenueMonthly, monthlyTarget,
+    currentPipeline, requiredPipelineLow, currentRevenueForecast,
+    meetingGap, pipelineGap, revenueGap,
+    gtmScore, gtmLabel, plan, industry,
   } = results
 
   return (
@@ -258,7 +354,6 @@ export default function ResultsPage() {
       <div className="bg-gradient-to-r from-violet-600 to-pink-500 text-white text-center text-sm font-medium py-2 tracking-wide">
         B2B CONTENT SYNDICATION SERVICES
       </div>
-
       <nav className="bg-white border-b border-gray-100 px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/">
@@ -273,17 +368,11 @@ export default function ResultsPage() {
         {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-4">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
             Assessment Complete
           </div>
-          <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-3">
-            Your Pipeline & Revenue Assessment Results
-          </h1>
-          <p className="text-gray-500 max-w-xl mx-auto">
-            Based on your inputs and industry benchmarks, here is your modeled pipeline opportunity.
-          </p>
+          <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-3">Your Pipeline & Revenue Assessment Results</h1>
+          <p className="text-gray-500 max-w-xl mx-auto">Based on your inputs and industry benchmarks, here is your modeled pipeline opportunity.</p>
         </div>
 
         {/* KPI Cards */}
@@ -295,6 +384,7 @@ export default function ResultsPage() {
           <div className="bg-violet-600 rounded-2xl p-6 text-white">
             <p className="text-violet-200 text-sm font-semibold uppercase tracking-wide mb-2">Expected Meetings/Month</p>
             <p className="text-4xl font-extrabold">{expectedMeetings}</p>
+            <p className="text-violet-200 text-xs mt-1">{industry} benchmark applied</p>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
             <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide mb-2">Pipeline Potential/Quarter</p>
@@ -306,40 +396,48 @@ export default function ResultsPage() {
           </div>
         </div>
 
+        {/* Two Funnels Side by Side */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-8">
+          <h2 className="text-xl font-extrabold text-gray-900 mb-1">Funnel Comparison</h2>
+          <p className="text-gray-500 text-sm mb-5">Your current state vs what is required to hit your revenue target.</p>
+          <div className="grid grid-cols-3 gap-2 mb-2">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">Funnel Stage</span>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wide text-center">Current</span>
+            <span className="text-xs font-bold text-violet-700 uppercase tracking-wide text-center">Required</span>
+          </div>
+          <FunnelRow label="High Intent Leads" current={currentHighIntent} required={requiredHighIntent} />
+          <FunnelRow label="SQLs" current={currentSQLs} required={requiredSQLs} />
+          <FunnelRow label="Meetings / Month" current={currentMeetingsFunnel} required={requiredMeetings} />
+          <FunnelRow label="Deals to Close" current={Math.round(currentMeetingsFunnel * 0.15)} required={requiredDeals} />
+        </div>
+
         {/* Gap Analysis */}
         <div className="mb-8">
           <h2 className="text-xl font-extrabold text-gray-900 mb-4">Gap Analysis</h2>
           <div className="grid lg:grid-cols-3 gap-4">
-            <GapCard
-              title="Meeting Gap"
-              current={currentMeetings}
-              potential={expectedMeetings}
-              gap={meetingGap}
-              currentLabel="Current Meetings"
-              potentialLabel="Potential Meetings"
-              gapLabel="Gap Identified"
-              isCurrency={false}
-            />
-            <GapCard
-              title="Pipeline Gap"
-              current={currentPipeline}
-              potential={requiredPipeline}
-              gap={pipelineGap}
-              currentLabel="Current Pipeline"
-              potentialLabel="Required Pipeline"
-              gapLabel="Gap Identified"
-              isCurrency={true}
-            />
-            <GapCard
-              title="Revenue Gap"
-              current={monthlyRevenueTarget}
-              potential={revenueMonthly}
-              gap={revenueGap}
-              currentLabel="Target Revenue/Month"
-              potentialLabel="Modeled Revenue/Month"
-              gapLabel="Gap Identified"
-              isCurrency={true}
-            />
+            {[
+              { title: 'Meeting Gap', current: currentMeetingsFunnel, required: requiredMeetings, gap: meetingGap, currentLabel: 'Current Meetings', requiredLabel: 'Required Meetings', unit: '/month', isCurrency: false },
+              { title: 'Pipeline Gap', current: currentPipeline, required: requiredPipelineLow, gap: pipelineGap, currentLabel: 'Current Pipeline', requiredLabel: 'Required Pipeline', unit: '', isCurrency: true },
+              { title: 'Revenue Gap', current: currentRevenueForecast, required: monthlyTarget, gap: revenueGap, currentLabel: 'Current Forecast', requiredLabel: 'Monthly Target', unit: '/month', isCurrency: true },
+            ].map((item) => (
+              <div key={item.title} className="bg-white rounded-2xl border border-gray-100 p-6">
+                <h3 className="font-bold text-gray-900 text-base mb-4">{item.title}</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">{item.currentLabel}</span>
+                    <span className="font-semibold text-gray-900">{item.isCurrency ? formatCurrency(item.current) : item.current}{item.unit}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">{item.requiredLabel}</span>
+                    <span className="font-semibold text-violet-700">{item.isCurrency ? formatCurrency(item.required) : item.required}{item.unit}</span>
+                  </div>
+                  <div className="border-t border-gray-100 pt-3 flex justify-between text-sm">
+                    <span className="font-semibold text-gray-700">Gap Identified</span>
+                    <span className="font-bold text-green-600">+{item.isCurrency ? formatCurrency(item.gap) : item.gap}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -347,16 +445,12 @@ export default function ResultsPage() {
         <div className="bg-violet-600 rounded-2xl p-8 text-white mb-8">
           <p className="text-violet-200 text-sm font-semibold uppercase tracking-wide mb-1">Recommended Plan</p>
           <h2 className="text-2xl font-extrabold mb-1">{plan.name} — {plan.price}</h2>
-          <p className="text-violet-200 text-sm mb-4">
-            Based on your pipeline potential and revenue targets, we recommend the {plan.name}.
-          </p>
+          <p className="text-violet-200 text-sm mb-4">Based on your pipeline potential and revenue targets, we recommend the {plan.name}.</p>
           <p className="text-white font-semibold mb-3">Expected Outcome:</p>
           <ul className="space-y-2">
             {plan.outcomes.map((outcome, i) => (
               <li key={i} className="flex items-center gap-2 text-violet-100 text-sm">
-                <svg className="w-4 h-4 text-violet-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
+                <svg className="w-4 h-4 text-violet-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                 {outcome}
               </li>
             ))}
@@ -366,29 +460,19 @@ export default function ResultsPage() {
         {/* CTAs */}
         <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
           <h3 className="text-xl font-extrabold text-gray-900 mb-2">Book Your Pipeline Strategy Call</h3>
-          <p className="text-gray-500 mb-6 max-w-lg mx-auto">
-            Review your assessment and pipeline opportunities with our team.
-          </p>
+          <p className="text-gray-500 mb-6 max-w-lg mx-auto">Review your assessment and pipeline opportunities with our team.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a
-              href="https://salesgarners.com/contact-us/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-8 py-3 rounded-md transition-colors cursor-pointer"
-            >
+            <a href="https://salesgarners.com/contact-us/" target="_blank" rel="noopener noreferrer"
+              className="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-8 py-3 rounded-md transition-colors cursor-pointer">
               Book Your Pipeline Strategy Call
             </a>
-            <button
-              onClick={handleDownloadPDF}
-              disabled={pdfLoading}
-              className="border-2 border-violet-600 text-violet-600 hover:bg-violet-600 hover:text-white font-semibold px-8 py-3 rounded-md transition-colors disabled:opacity-60 cursor-pointer"
-            >
+            <button onClick={handleDownloadPDF} disabled={pdfLoading}
+              className="border-2 border-violet-600 text-violet-600 hover:bg-violet-600 hover:text-white font-semibold px-8 py-3 rounded-md transition-colors disabled:opacity-60 cursor-pointer">
               {pdfLoading ? 'Generating PDF...' : 'Download Your Full Pipeline Report'}
             </button>
           </div>
         </div>
 
-        {/* Trust section */}
         <p className="text-center text-gray-400 text-sm mt-8 max-w-2xl mx-auto">
           SalesGarners helps B2B tech companies build predictable pipeline through data-driven outbound and revenue modeling.
         </p>

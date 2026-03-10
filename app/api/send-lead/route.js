@@ -10,8 +10,8 @@ export async function POST(request) {
       name, companyName, email, companyWebsite, jobTitle,
       targetMarket, industry, acv, salesCycle,
       quarterlyRevenueTarget, mqlsPerMonth, mqlToSql, sqlToCustomer,
-      currentMeetings, currentPipeline, marketingSpend,
-      outboundType, databaseSize, databaseAccuracy, crm,
+      currentMeetings, marketingSpend, outboundType,
+      databaseSize, databaseAccuracy, crm,
     } = body
 
     if (!name || !email || !companyName || !targetMarket || !acv || !quarterlyRevenueTarget) {
@@ -33,7 +33,6 @@ export async function POST(request) {
       mqlToSql: String(mqlToSql),
       sqlToCustomer: String(sqlToCustomer),
       currentMeetings: String(currentMeetings),
-      currentPipeline: String(currentPipeline),
       marketingSpend: String(marketingSpend),
       outboundType: String(outboundType),
       databaseSize: String(databaseSize),
